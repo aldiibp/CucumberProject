@@ -8,13 +8,22 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.juaracoding.cucumber.config.AutomationFrameworkConfig;
 import com.juaracoding.cucumber4.driver.DriverSingleton;
-//import com.juaracoding.cucumber4.pages.BookingPage;
-//import com.juaracoding.cucumber4.pages.LoginPage;
+import com.juaracoding.cucumber4.pages.LoginPage;
+import com.juaracoding.cucumber4.pages.BookingPage;
+import com.juaracoding.cucumber4.pages.LoginPage;
 import com.juaracoding.cucumber4.utils.ConfigurationProperties;
 import com.juaracoding.cucumber4.utils.Constants;
+import com.juaracoding.cucumber4.utils.TestCases;
+import com.juaracoding.cucumber4.utils.Utils;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
 
 import io.cucumber.java.After;
+import io.cucumber.java.AfterAll;
+import io.cucumber.java.AfterStep;
 import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.cucumber.spring.CucumberContextConfiguration;
@@ -25,9 +34,11 @@ import io.cucumber.java.en.Then;
 public class StepDefinition {
 
 	private WebDriver driver;
-//	private LoginPage loginPage;
-//	private BookingPage bookingPage;
-
+	private LoginPage loginPage;
+	private BookingPage bookingPage;
+	ExtentTest extentTest;
+	static ExtentReports reports = new ExtentReports("src/main/resources/TestReport.html");
+	
 
 	@Autowired
 	ConfigurationProperties configurationProperties;
@@ -35,39 +46,59 @@ public class StepDefinition {
 	@Before
 	public void initializeObjects(){
 		DriverSingleton.getInstance(configurationProperties.getBrowser());
-//		loginPage = new LoginPage();
-//		bookingPage = new BookingPage();
+		loginPage = new LoginPage();
+		bookingPage = new BookingPage();
+		TestCases[] tests = TestCases.values();
+		extentTest = reports.startTest(tests[Utils.testCount].getTestName());
+		Utils.testCount++;
 	}
-	
+	@AfterStep
+	public void getResult(Scenario scenario) throws Exception {
+		if (scenario.isFailed()) {
+			String screenshotPath = Utils.getScreenshot(driver, scenario.getName().replace(" ", " "));
+			extentTest.log(LogStatus.FAIL, "Screenshot:\n"+
+			extentTest.addScreenCapture(screenshotPath));
+	}
+	}
+	@AfterAll
+	public static void closeBrowser() {
+		driver.quit();
+	}
 	
 	@Given("Customer mengakses url")
 	public void customer_mengakses_url() {
 		driver = DriverSingleton.getDriver();
 		driver.get(Constants.URL);
+		extentTest.log(LogStatus.PASS, "Navigating to "+Constants.URL);
 	}
 	
-//	@When("Customer klik login button")
-//	public void customer_klik_login_button() {
-//		loginPage.submitLogin(configurationProperties.getEmail(), configurationProperties.getPassword());
-//	}
-//		
-//	@Then("Customer berhasil login")
-//	public void customer_berhasil_login() {
-//		driver.navigate().refresh();
-//		tunggu();
-//		assertEquals(configurationProperties.getTxtWelcome(), loginPage.getTxtWelcome());
-//	}
+	@When("Customer klik login button")
+	public void customer_klik_login_button() {
+	loginPage.submitLogin(configurationProperties.getEmail(), configurationProperties.getPassword());
+	extentTest.log(LogStatus.PASS, "Customer klik login Button");
+	}
+		
+	@Then("Customer berhasil login")
+	public void customer_berhasil_login() {
+		//refresh
+		driver.navigate().refresh();
+		tunggu();
+		assertEquals(configurationProperties.getTxtWelcome(), loginPage.getTxtWelcome());
+		extentTest.log(LogStatus.PASS, "Customer berhasil login");
+	}
 	
-//	@When("Customer klik menu My Booking")
-//	public void customer_klik_menu_my_booking() {
-//		tunggu();
-//		bookingPage.goToMenuMyBooking();
-//	}
-//	
-//	@Then("Customer melihat page MyBooking")
-//	public void customer_melihat_page_title() {
-//		assertEquals(configurationProperties.getTxtTitleMyBookingPage(), bookingPage.getTxtTitleMyBookingPage());
-//	}
+	@When("Customer klik menu My Booking")
+	public void customer_klik_menu_my_booking() {
+		tunggu();
+		bookingPage.goToMenuMyBooking();
+		extentTest.log(LogStatus.PASS, "Customer klik menu My Booking");
+	}
+	
+	@Then("Customer melihat page MyBooking")
+	public void customer_melihat_page_title() {
+		assertEquals(configurationProperties.getTxtTitleMyBookingPage(), bookingPage.getTxtTitleMyBookingPage());
+		extentTest.log(LogStatus.PASS, "Customer melihat page MyBooking");
+	}
 	
 	public void tunggu() {
 		try {
