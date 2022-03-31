@@ -28,6 +28,7 @@ public class StepDefinition {
 //	private LoginPage loginPage;
 //	private BookingPage bookingPage;
 
+
 	@Autowired
 	ConfigurationProperties configurationProperties;
 	
